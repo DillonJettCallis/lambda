@@ -1,6 +1,7 @@
 package org.redgear.lambda.collection;
 
 import org.redgear.lambda.collection.impl.StreamListImpl;
+import org.redgear.lambda.function.Func1;
 
 import java.util.*;
 import java.util.function.*;
@@ -10,7 +11,7 @@ import java.util.stream.*;
  * Created by dcallis on 7/21/2015.
  *
  */
-public interface StreamList<T> extends List<T>, Stream<T> {
+public interface StreamList<T> extends java.util.List<T>, Seq<T> {
 
 	Stream<T> stream();
 
@@ -53,8 +54,10 @@ public interface StreamList<T> extends List<T>, Stream<T> {
 	@Override
 	<R> StreamList<R> flatMap(Function<? super T, ? extends Stream<? extends R>> function);
 
+	@Override
 	<R> StreamList<R> flatMapIt(Function<? super T, ? extends Iterable<R>> function);
 
+	@Override
 	<R> StreamList<R> flatMapOp(Function<? super T, ? extends Optional<? extends R>> function);
 
 	@Override
@@ -87,14 +90,12 @@ public interface StreamList<T> extends List<T>, Stream<T> {
 		return stream().flatMapToDouble(function);
 	}
 
-	StreamList<T> ensureSize();
-
 	default StreamList<T> concat (Stream<T> other){
-		return from(new JoiningIterator<>(this.iterator(), other.iterator()));
+		return from(other.iterator());
 	}
 
 	default StreamList<T> concat (Iterable<T> other){
-		return from(new JoiningIterator<>(this.iterator(), other.iterator()));
+		return from(other.iterator());
 	}
 
 	default StreamList<T> concat (Iterator<T> other){
@@ -102,12 +103,28 @@ public interface StreamList<T> extends List<T>, Stream<T> {
 	}
 
 	default StreamList<T> concat (T other) {
-		return from(new JoiningIterator<>(this.iterator(), new SingletonInterator<>(other)));
+		return from(new SingletonIterator<>(other));
 	}
 
 	default StreamList<T> concat (T... other){
-		return from(new JoiningIterator<>(this.iterator(), new ArrayIterator<>(other)));
+		return from(new ArrayIterator<>(other));
 	}
+
+	default StreamList<T> concat(Seq<T> other) {
+		return concat(other.iterator());
+	}
+
+	default StreamList<T> concat(StreamList<T> other) {
+		return concat(other.iterator());
+	}
+
+	default StreamList<T> concat(ImmutableList<T> other) {
+		return concat(other.iterator());
+	}
+
+	StreamList<T> tail();
+
+	StreamList<T> init();
 
 	@Override
 	StreamList<T> distinct();
@@ -227,22 +244,15 @@ public interface StreamList<T> extends List<T>, Stream<T> {
 
 	@Override
 	default Spliterator<T> spliterator(){
-		return List.super.spliterator();
+		return java.util.List.super.spliterator();
 	}
 
-	T fold(T start, BiFunction<? super T, ? super T, ? extends T> func);
-
-	<R> R foldLeft(R start, BiFunction<? super R, ? super T, ? extends R> func);
-
-	<R> R foldRight(R start, BiFunction<? super T, ? super R, ? extends R> func);
-
-	List<T> toList();
-
+	@Override
 	default Set<T> toSet(){
-		return new HashSet<>(this);
+		return new HashSet<T>(this);
 	}
 
-	static <T> StreamList<T> from(List<T> source){
+	static <T> StreamList<T> from(java.util.List<T> source){
 		return StreamListImpl.from(source);
 	}
 

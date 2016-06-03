@@ -19,6 +19,14 @@ public class ToString implements Supplier<String> {
 		this.message = Lazy.of(() -> func.apply(source));
 	}
 
+	public static <T> ToString from(Supplier<T> message) {
+		return new ToString(message);
+	}
+
+	public static <T> ToString from(T source, Function<? super T, String> func){
+		return new ToString(source, func);
+	}
+
 	@Override
 	public String toString(){
 		return get();

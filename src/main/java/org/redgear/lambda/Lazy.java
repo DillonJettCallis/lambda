@@ -1,12 +1,14 @@
 package org.redgear.lambda;
 
+import org.redgear.lambda.function.Func0;
+
 import java.util.function.Supplier;
 
 /**
  * Created by dcallis on 7/17/2015.
  *
  */
-public class Lazy<T> implements Memoizer<T>{
+public class Lazy<T> implements Func0<T> {
 
 	private Supplier<T> source;
 	private transient T value;
@@ -32,7 +34,7 @@ public class Lazy<T> implements Memoizer<T>{
 	}
 
 	@Override
-	public T get() {
+	public T checkedApply() {
 		if(!initilized){
 			synchronized (this){
 				if(!initilized){

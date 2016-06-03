@@ -1,0 +1,16 @@
+#IntelliJ
+
+.idea
+*.iml
+
+
+#Maven
+
+target
+build.log
+
+
+#Eclipse
+
+.project
+.classpath

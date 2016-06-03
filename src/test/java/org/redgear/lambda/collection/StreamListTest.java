@@ -22,7 +22,7 @@ public class StreamListTest {
 	public void basicMapTest() {
 		final int size = 8;
 
-		StreamList<Integer> streamList = StreamListImpl.generate((int i) -> "Test " + i, size)
+		StreamList<Integer> streamList = StreamBuilder.from(i -> "Test " + i, size).streamList()
 				.map(s -> s.split(" ")[1])
 				.map(Integer::parseInt);
 

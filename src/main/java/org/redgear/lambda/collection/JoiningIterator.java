@@ -9,10 +9,10 @@ import java.util.NoSuchElementException;
  */
 public class JoiningIterator<T> implements Iterator<T> {
 
-	private final Iterator<T> first;
-	private final Iterator<T> second;
+	private final Iterator<? extends T> first;
+	private final Iterator<? extends T> second;
 
-	public JoiningIterator(Iterator<T> first, Iterator<T> second){
+	public JoiningIterator(Iterator<? extends T> first, Iterator<? extends T> second){
 		this.first = first;
 		this.second = second;
 	}

@@ -30,7 +30,7 @@ public class CopyableTest {
 		}
 
 		@Override
-		public Thing clone() {
+		public Thing copy() {
 			return new Thing(data);
 		}
 

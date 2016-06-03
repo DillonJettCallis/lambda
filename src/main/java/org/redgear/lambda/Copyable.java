@@ -4,13 +4,12 @@ package org.redgear.lambda;
  * Created by dcallis on 7/17/2015.
  *
  */
-@FunctionalInterface
-public interface Copyable<T> extends Cloneable{
+public interface Copyable<T> {
 
-	default T copy(){
-		return clone();
+	T copy();
+
+	default T deepCopy() {
+		return copy();
 	}
-
-	T clone();
 
 }

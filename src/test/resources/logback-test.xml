@@ -6,7 +6,7 @@
 			<pattern>[%d{dd MMM HH:mm:ss}] %t %level: %m%n</pattern>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>Info</level>
+			<level>Trace</level>
 		</filter>
 	</appender>
 
@@ -19,7 +19,7 @@
 		</layout>
 	</appender>
 
-	<logger name="com.amex" level="TRACE" />
+	<logger name="org.redgear.lambda" level="TRACE" />
 
 	<root level="INFO">
 		<appender-ref ref="console" />

@@ -1,16 +1,20 @@
 package org.redgear.lambda.collection;
 
+import org.redgear.lambda.control.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Stream;
 
+import static org.redgear.lambda.GenericUtils.none;
+import static org.redgear.lambda.GenericUtils.some;
+
 /**
  * Created by dcallis on 7/21/2015.
  *
  */
-public class LazyList<T> implements List<T> {
+public class LazyList<T> extends AbstractList<T> implements Traversable<T> {
 
 	public static final Logger log = LoggerFactory.getLogger(LazyList.class);
 
@@ -22,44 +26,39 @@ public class LazyList<T> implements List<T> {
 		this.list = new ArrayList<>();
 	}
 
-	public LazyList(Stream<T> source){
-		this(source.iterator());
-	}
-
-	public LazyList(Iterable<T> source){
-		this(source.iterator());
-	}
-
 	public static <T> LazyList<T> from(Iterator<T> source){
 		return new LazyList<>(source);
 	}
 
 	public static <T> LazyList<T> from(Stream<T> source){
-		return new LazyList<>(source);
+		return new LazyList<>(source.iterator());
+	}
+
+	public static <T> LazyList<T> from(Seq<T> source){
+		return new LazyList<>(source.iterator());
 	}
 
 	public static <T> LazyList<T> from(Iterable<T> source){
 		if(source instanceof LazyList)
 			return (LazyList<T>) source;
 		else
-			return new LazyList<>(source);
+			return new LazyList<>(source.iterator());
 	}
 
-	public int pullAll(){
-		if(source == null)
-			return 0;
-
-		int pulled = 0;
-		while(source.hasNext()) {
-			list.add(source.next());
-			pulled++;
-		}
-		source = null;
-		list.trimToSize();
-		return pulled;
+	public static <T> LazyList<T> from(T... source){
+		return new LazyList<>(new ArrayIterator<>(source));
 	}
 
-	public int pull(int amount){
+	public LazyList<T> realize() {
+		thunk();
+		return this;
+	}
+
+	public int thunk(){
+		return thunk(Integer.MAX_VALUE);
+	}
+
+	public int thunk(int amount){
 		if(source == null)
 			return 0;
 
@@ -80,126 +79,109 @@ public class LazyList<T> implements List<T> {
 		return list.size() - 1;
 	}
 
-	public LazyList<T> concat(LazyList<T> other) {
-		return from(new JoiningIterator<>(iterator(), other.iterator()));
+	public LazyList<T> concat(Iterator<T> other) {
+		return from(new JoiningIterator<>(iterator(), other));
+	}
+
+	public LazyList<T> concat(Iterable<T> other) {
+		return concat(other.iterator());
+	}
+
+	public LazyList<T> concat(Stream<T> other) {
+		return concat(other.iterator());
+	}
+
+	public LazyList<T> concat(T... other) {
+		return concat(new ArrayIterator<>(other));
+	}
+
+	public LazyList<T> concat(T other) {
+		return concat(new SingletonIterator<>(other));
+	}
+
+	public LazyList<T> concat(Seq<T> other) {
+		return concat(other.iterator());
+	}
+
+	public LazyList<T> concat(StreamList<T> other) {
+		return concat(other.iterator());
+	}
+
+	public LazyList<T> concat(ImmutableList<T> other) {
+		return concat(other.iterator());
+	}
+
+	@Override
+	public Stream<T> toStream() {
+		return stream();
 	}
 
 
 	@Override
 	public int size() {
-		pullAll();
+		thunk();
 		return list.size();
 	}
 
 	@Override
+	public T head() {
+		return headOption().get();
+	}
+
+	@Override
+	public Option<T> headOption() {
+		return isEmpty() ? none() : some(get(0));
+	}
+
+	@Override
+	public LazyList<T> tail() {
+		return isEmpty() ? LazyList.from(EmptyIterator.instance()) : subList(1, Integer.MAX_VALUE);
+	}
+
+	@Override
+	public LazyList<T> init() {
+		return isEmpty() ? LazyList.from(EmptyIterator.instance()) : subList(0, size() - 1);
+	}
+
+	@Override
+	public T last() {
+		return lastOption().get();
+	}
+
+	@Override
+	public Option<T> lastOption() {
+		return isEmpty() ? none() : some(get(size() - 1));
+	}
+
+	@Override
+	public LazyList<T> take(int num) {
+		return from(toSeq().take(num));
+	}
+
+	@Override
+	public LazyList<T> drop(int num) {
+		return from(toSeq().drop(num));
+	}
+
+	@Override
 	public boolean isEmpty() {
-		return list.isEmpty() && pull(1) == 0;
-	}
-
-	@Override
-	public boolean contains(Object o) {
-
-		for(T item : this){
-			if(item != null && item.equals(o))
-				return true;
-		}
-
-		return false;
-	}
-
-	@Override
-	public Iterator<T> iterator() {
-		return listIterator();
-	}
-
-	@Override
-	public Object[] toArray() {
-		pullAll();
-		return list.toArray();
-	}
-
-	@Override
-	public <T1> T1[] toArray(T1[] t1s) {
-		pullAll();
-		return list.toArray(t1s);
+		return list.isEmpty() && thunk(1) == 0;
 	}
 
 	@Override
 	public boolean add(T t) {
-		pullAll();
+		thunk();
 		return list.add(t);
 	}
 
 	@Override
-	public boolean remove(Object o) {
-		for(T item : this){
-			if(item != null && item.equals(o)) {
-				return list.remove(o);
-			}
-		}
-
-		return false;
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> collection) {
-		for(Object obj : collection){
-			if(!contains(obj))
-				return false;
-		}
-
-		return true;
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends T> collection) {
-		if(collection.isEmpty())
-			return false;
-
-		pullAll();
-
-		list.addAll(collection);
-
-		return true;
-	}
-
-	@Override
-	public boolean addAll(int i, Collection<? extends T> collection) {
-		if(collection.isEmpty())
-			return false;
-
-		int pullUntil = i - lazyIndex();
-
-		if(pullUntil > 0)
-			pull(pullUntil);
-
-		list.addAll(i, collection);
-
-		return true;
-	}
-
-	@Override
 	public boolean removeAll(Collection<?> collection) {
-		if(collection.isEmpty())
-			return false;
-
-		boolean changed = false;
-
-		for(Object obj : collection)
-			changed |= remove(obj);
-
-
-		return changed;
+		return !collection.isEmpty() && super.removeAll(collection);
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> collection) {
-		if(collection.isEmpty())
-			return false;
-
-		pullAll();
-
-		return list.retainAll(collection);
+		return !collection.isEmpty() && super.retainAll(collection);
 	}
 
 	@Override
@@ -213,7 +195,7 @@ public class LazyList<T> implements List<T> {
 		if(lazyIndex() > i)
 			return list.get(i);
 		else {
-			pull(i - lazyIndex());
+			thunk(i - lazyIndex());
 			return list.get(i);
 		}
 	}
@@ -223,7 +205,7 @@ public class LazyList<T> implements List<T> {
 		if(lazyIndex() > i)
 			return list.set(i, t);
 		else {
-			pull(i - lazyIndex());
+			thunk(i - lazyIndex());
 			return list.set(i, t);
 		}
 	}
@@ -233,7 +215,7 @@ public class LazyList<T> implements List<T> {
 		if(lazyIndex() > i)
 			list.add(i, t);
 		else {
-			pull(i - lazyIndex());
+			thunk(i - lazyIndex());
 			list.add(i, t);
 		}
 	}
@@ -243,26 +225,9 @@ public class LazyList<T> implements List<T> {
 		if(lazyIndex() > i)
 			return list.remove(i);
 		else {
-			pull(i - lazyIndex());
+			thunk(i - lazyIndex());
 			return list.remove(i);
 		}
-	}
-
-	@Override
-	public int indexOf(Object o) {
-		for(T t : this){
-			if(t != null && t.equals(o)){
-				return list.indexOf(o);
-			}
-		}
-
-		return -1;
-	}
-
-	@Override
-	public int lastIndexOf(Object o) {
-		pullAll();
-		return list.lastIndexOf(o);
 	}
 
 	@Override
@@ -278,7 +243,7 @@ public class LazyList<T> implements List<T> {
 
 			@Override
 			public boolean hasNext() {
-				return LazyList.this.lazyIndex() >= index || LazyList.this.pull(1) == 1;
+				return LazyList.this.lazyIndex() >= index || LazyList.this.thunk(1) == 1;
 			}
 
 			@Override
@@ -324,54 +289,7 @@ public class LazyList<T> implements List<T> {
 	}
 
 	@Override
-	public List<T> subList(int start, int end) {
-		return from(new Iterator<T>(){
-
-			int index = start;
-
-			@Override
-			public boolean hasNext() {
-				return index < end && (lazyIndex() >= index || pull(index - lazyIndex()) == index - lazyIndex());
-			}
-
-			@Override
-			public T next() {
-				return get(index++);
-			}
-		});
-
-//		if(lazyIndex() > end)
-//			return list.subList(start, end);
-//		else {
-//			pull(end - lazyIndex());
-//			return list.subList(start, end);
-//		}
-	}
-
-
-	@Override
-	public boolean equals(Object obj){
-		if(this == obj)
-			return true;
-
-		if(obj instanceof List){
-			List<?> other = (List) obj;
-			pullAll();
-			return list.equals(other);
-		}
-		else
-			return false;
-	}
-
-	@Override
-	public int hashCode(){
-		pullAll();
-		return list.hashCode();
-	}
-
-	@Override
-	public String toString(){
-		pullAll();
-		return list.toString();
+	public LazyList<T> subList(int start, int end) {
+		return from(Seq.from(this).drop(start).take(end - start));
 	}
 }

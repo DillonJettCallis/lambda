@@ -1,12 +1,20 @@
 package org.redgear.lambda.collection.impl;
 
-import org.redgear.lambda.collection.StreamList;
+import org.redgear.lambda.collection.ImmutableList;
 import org.redgear.lambda.collection.LazyList;
+import org.redgear.lambda.collection.Seq;
+import org.redgear.lambda.collection.StreamList;
+import org.redgear.lambda.control.Option;
+import org.redgear.lambda.tuple.Tuple2;
 
 import java.util.*;
-import java.util.function.*;
-import java.util.stream.IntStream;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static org.redgear.lambda.GenericUtils.*;
 
 /**
  * Created by dcallis on 7/21/2015.
@@ -14,13 +22,13 @@ import java.util.stream.Stream;
  */
 public class StreamListImpl<T> implements StreamList<T> {
 
-	private final List<T> source;
+	private final java.util.List<T> source;
 
-	public StreamListImpl(List<T> source){
+	public StreamListImpl(java.util.List<T> source){
 		this.source = source;
 	}
 
-	public static <T> StreamList<T> from(List<T> source){
+	public static <T> StreamList<T> from(java.util.List<T> source){
 		if(source instanceof StreamListImpl)
 			return (StreamList<T>) source;
 		else
@@ -28,7 +36,7 @@ public class StreamListImpl<T> implements StreamList<T> {
 	}
 
 	public static <T> StreamList<T> from(Collection<T> source){
-		if(source instanceof List)
+		if(source instanceof java.util.List)
 			return from((List<T>) source);
 
 		return from(new ArrayList<>(source));
@@ -54,52 +62,6 @@ public class StreamListImpl<T> implements StreamList<T> {
 
 	public static <T> StreamList<T> from(T... source) {
 		return from(Arrays.asList(source));
-	}
-
-	public static <T> StreamList<T> generate(Supplier<T> source, int size){
-		return from(IntStream.range(0, size).mapToObj(i -> source.get()));
-	}
-
-	public static <T> StreamList<T> generate(IntFunction<T> source, int size){
-		return from(IntStream.range(0, size).mapToObj(source));
-	}
-
-	public static <T> StreamList<T> generate(Supplier<Optional<T>> source){
-		return from(new Iterator<T>(){
-
-			Optional<T> maybeNext = source.get();
-
-			@Override
-			public boolean hasNext() {
-				return maybeNext.isPresent();
-			}
-
-			@Override
-			public T next() {
-				T next = maybeNext.get();
-				maybeNext = source.get();
-				return next;
-			}
-		});
-	}
-
-	public static <T> StreamList<T> generate(T init, Function<? super T, Optional<? extends T>> producer){
-		return from(new Iterator<T>(){
-
-			Optional<? extends T> maybeNext = Optional.ofNullable(init);
-
-			@Override
-			public boolean hasNext() {
-				return maybeNext.isPresent();
-			}
-
-			@Override
-			public T next() {
-				T next = maybeNext.get();
-				maybeNext = producer.apply(next);
-				return next;
-			}
-		});
 	}
 
 	@Override
@@ -138,13 +100,6 @@ public class StreamListImpl<T> implements StreamList<T> {
 	}
 
 	@Override
-	public StreamList<T> ensureSize(){
-		if(source instanceof LazyList)
-			((LazyList) source).pullAll();
-		return this;
-	}
-
-	@Override
 	public StreamList<T> distinct() {
 		return from(stream().distinct());
 	}
@@ -177,6 +132,41 @@ public class StreamListImpl<T> implements StreamList<T> {
 	@Override
 	public int size() {
 		return source.size();
+	}
+
+	@Override
+	public T head() {
+		return headOption().get();
+	}
+
+	@Override
+	public Option<T> headOption() {
+		return isEmpty() ? none() : some(get(0));
+	}
+
+	@Override
+	public StreamList<T> tail() {
+		Iterator<T> next = source.iterator();
+
+		if(next.hasNext())
+			next.next();
+
+		return from(next);
+	}
+
+	@Override
+	public StreamList<T> init() {
+		return from(source.subList(0, size() - 1));
+	}
+
+	@Override
+	public T last() {
+		return lastOption().get();
+	}
+
+	@Override
+	public Option<T> lastOption() {
+		return isEmpty() ? none() : some(get(size() - 1));
 	}
 
 	@Override
@@ -300,8 +290,30 @@ public class StreamListImpl<T> implements StreamList<T> {
 	}
 
 	@Override
-	public List<T> toList(){
-		return LazyList.from(stream());
+	public Stream<T> toStream() {
+		return source.stream();
+	}
+
+	@Override
+	public StreamList<T> toStreamList() {
+		return this;
+	}
+
+	@Override
+	public ImmutableList<T> toImmutableList() {
+		return ImmutableList.from(source);
+	}
+
+	@Override
+	public StreamList<T> realize() {
+		if(source instanceof LazyList)
+			((LazyList) source).thunk();
+		return this;
+	}
+
+	@Override
+	public <Other> Seq<Tuple2<T, Other>> zipWith(Stream<Other> otherSteam) {
+		return null;
 	}
 
 	@Override

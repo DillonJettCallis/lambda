@@ -10,4 +10,11 @@ public class Tuple0 implements Tuple {
 	public int arity() {
 		return 0;
 	}
+
+	@Override
+	public Tuple0 reverse() {
+		return this;
+	}
+
+
 }
