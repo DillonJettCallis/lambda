@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by dcallis on 4/5/2016.
@@ -29,6 +30,11 @@ public class GenericUtils {
 		return EmptyIterator.instance();
 	}
 
+	public static <T> Iterator<T> iterator(T args) {
+		return args == null ? iterator() : new SingletonIterator<>(args);
+	}
+
+	@SafeVarargs
 	public static <T> Iterator<T> iterator(T... args) {
 		return args == null ? iterator() : new ArrayIterator<>(args);
 	}
@@ -54,27 +60,48 @@ public class GenericUtils {
 	}
 
 	public static <T> Iterator<T> iterator(StreamList<T> source) {
-		return source == null ? iterator() : iterator(source.toStream());
+		return source == null ? iterator() : source.iterator();
 	}
 
 	public static <K, V> Iterator<Tuple2<K, V>> iterator(Map<K, V> source) {
-		return seq(source).iterator();
+		return stream(source).iterator();
 	}
 
 	public static <T> List<T> list() {
 		return new ArrayList<>();
 	}
 
+	public static <T> List<T> list(T args) {
+		List<T> result = list();
+
+		if (args != null)
+			result.add(args);
+
+		return result;
+	}
+
+	@SafeVarargs
 	public static <T> List<T> list(T... args) {
 		return args == null ? list() : Arrays.asList(args);
 	}
 
 	public static <T> List<T> list(Iterator<T> source) {
-		return list(stream(source));
+		List<T> result = list();
+
+		if(source != null)
+			while(source.hasNext())
+				result.add(source.next());
+
+		return result;
 	}
 
 	public static <T> List<T> list(Iterable<T> source) {
-		return list(iterator(source));
+		if(source instanceof Collection)
+			return list((Collection<T>) source);
+		else if (source instanceof Traversable)
+			return ((Traversable<T>) source).toList();
+		else
+			return list(iterator(source));
 	}
 
 	public static <T> List<T> list(Collection<T> source) {
@@ -82,7 +109,13 @@ public class GenericUtils {
 	}
 
 	public static <T> List<T> list(Stream<T> source) {
-		return source == null ? list() : source.collect(Collectors.toList());
+		if(source instanceof Seq)
+			return ((Seq<T>) source).toList();
+
+		if (source == null)
+			return list();
+		else
+			return source.collect(Collectors.toList());
 	}
 
 	public static <T> List<T> list(Seq<T> source) {
@@ -90,27 +123,37 @@ public class GenericUtils {
 	}
 
 	public static <T> List<T> list(StreamList<T> source) {
-		return list(source.toStream());
+		return source == null ? list() : source.toList();
 	}
 
 	public static <K, V> List<Tuple2<K, V>> list(Map<K, V> source) {
-		return source == null ? list() : seq(source).toList();
+		return source == null ? list() : stream(source).collect(Collectors.toList());
 	}
 
 	public static <T> Stream<T> stream() {
 		return Stream.empty();
 	}
 
+	public static <T> Stream<T> stream(T args) {
+		return args == null ? Stream.empty() : Stream.of(args);
+	}
+
+	@SafeVarargs
 	public static <T> Stream<T> stream(T... args) {
-		return Stream.of(args);
+		return args == null ? Stream.empty() : Stream.of(args);
 	}
 
 	public static <T> Stream<T> stream(Iterator<T> source){
-		return source == null ? Stream.empty() : StreamBuilder.from(source).stream();
+		return source == null ? Stream.empty() : StreamSupport.stream(Spliterators.spliterator(source, Long.MAX_VALUE, 0), false);
 	}
 
 	public static <T> Stream<T> stream(Iterable<T> source){
-		return source == null ? Stream.empty() : StreamBuilder.from(source).stream();
+		if(source instanceof Traversable)
+			return ((Traversable<T>) source).toStream();
+		else if(source instanceof Collection)
+			return ((Collection<T>) source).stream();
+		else
+			return source == null ? Stream.empty() : StreamSupport.stream(source.spliterator(), false);
 	}
 
 	public static <T> Stream<T> stream(Collection<T> source) {
@@ -130,23 +173,57 @@ public class GenericUtils {
 	}
 
 	public static <K, V> Stream<Tuple2<K, V>> stream(Map<K, V> source) {
-		return seq(source).toStream();
+		return source.entrySet().stream().map(entry -> new Tuple2<>(entry.getKey(), entry.getValue()));
 	}
 
 	public static <T> Set<T> set() {
 		return new HashSet<>();
 	}
 
+	public static <T> Set<T> set(T args) {
+		Set<T> result = set();
+
+		if(args != null)
+			result.add(args);
+
+		return result;
+	}
+
+	@SafeVarargs
 	public static <T> Set<T> set(T... args) {
-		return args == null ? set() : set(Arrays.asList(args));
+		Set<T> result = set();
+
+		if(args != null)
+			Collections.addAll(result, args);
+
+		return result;
 	}
 
 	public static <T> Set<T> set(Iterator<T> source) {
-		return set(seq(source));
+		Set<T> result = set();
+
+		if(source != null)
+			while(source.hasNext())
+				result.add(source.next());
+
+		return result;
 	}
 
 	public static <T> Set<T> set(Iterable<T> source) {
-		return set(seq(source));
+		if(source == null)
+			return set();
+		if(source instanceof Traversable)
+			return ((Traversable<T>) source).toSet();
+		else if (source instanceof Collection) {
+			Set<T> result = set();
+			result.addAll(((Collection<T>) source));
+			return result;
+		} else {
+			Set<T> result = set();
+			for(T t : source)
+				result.add(t);
+			return result;
+		}
 	}
 
 	public static <T> Set<T> set(Collection<T> source) {
@@ -158,27 +235,38 @@ public class GenericUtils {
 	}
 
 	public static <T> Set<T> set(Stream<T> source) {
+		if(source == null)
+			return set();
+
+		if(source instanceof Traversable)
+			return ((Traversable<T>) source).toSet();
+
 		return source.collect(Collectors.toSet());
 	}
 
 	public static <T> Set<T> set(Seq<T> source) {
-		return source.collect(Collectors.toSet());
+		return source == null ? set() : source.toSet();
 	}
 
 	public static <T> Set<T> set(StreamList<T> source) {
-		return source == null ? set() : set(source.toStream());
+		return source == null ? set() : source.toSet();
 	}
 
 	public static  <K, V> Set<Tuple2<K, V>> set(Map<K, V> source)  {
-		return seq(source).toSet();
+		return stream(source).collect(Collectors.toSet());
 	}
 
 	public static <T> Seq<T> seq() {
 		return Seq.from(stream());
 	}
 
+	public static <T> Seq<T> seq(T source) {
+		return seq(Stream.of(source));
+	}
+
+	@SafeVarargs
 	public static <T> Seq<T> seq(T... source) {
-		return seq(stream(source));
+		return seq(Stream.of(source));
 	}
 
 	public static <T> Seq<T> seq(Iterator<T> source) {
@@ -194,7 +282,7 @@ public class GenericUtils {
 	}
 
 	public static <T> Seq<T> seq(Stream<T> source) {
-		return Seq.from(stream(source));
+		return Seq.from(source == null ? Stream.empty() : source);
 	}
 
 	public static <T> Seq<T> seq(Seq<T> source) {
@@ -206,13 +294,18 @@ public class GenericUtils {
 	}
 
 	public static <K, V> Seq<Tuple2<K, V>> seq(Map<K, V> source) {
-		return Seq.from(source);
+		return Seq.from(stream(source));
 	}
 
 	public static <T> ImmutableList<T> immutableList() {
 		return ImmutableList.nil();
 	}
 
+	public static <T> ImmutableList<T> immutableList(T args) {
+		return ImmutableList.from(args);
+	}
+
+	@SafeVarargs
 	public static <T> ImmutableList<T> immutableList(T... args) {
 		return ImmutableList.from(args);
 	}
@@ -245,8 +338,13 @@ public class GenericUtils {
 		return StreamList.from(list());
 	}
 
+	public static <T> StreamList<T> streamList(T args) {
+		return StreamList.from(list(args));
+	}
+
+	@SafeVarargs
 	public static <T> StreamList<T> streamList(T... args) {
-		return StreamList.from(args);
+		return StreamList.from(list(args));
 	}
 
 	public static <T> StreamList<T> streamList(Iterator<T> source) {

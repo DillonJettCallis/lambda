@@ -1,11 +1,18 @@
 package org.redgear.lambda.collection;
 
+import org.redgear.lambda.GenericUtils;
+import org.redgear.lambda.Lazy;
+import org.redgear.lambda.collection.impl.FluentIterators;
 import org.redgear.lambda.control.Option;
 import org.redgear.lambda.tuple.Tuple;
 import org.redgear.lambda.tuple.Tuple2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,6 +24,8 @@ import static org.redgear.lambda.GenericUtils.*;
  * Created by dcallis on 11/23/2015.
  */
 public interface ImmutableList<Type> extends Traversable<Type> {
+
+	Logger log = LoggerFactory.getLogger(ImmutableList.class);
 
 	default Type head() {
 		return headOption().get();
@@ -148,16 +157,18 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 	}
 
 	default <Other> ImmutableList<Tuple2<Type, Other>> zip(ImmutableList<Other> other) {
-		return foldLeft(Tuple.of(Nil.<Tuple2<Type, Other>>nil(), other), (pair, next) -> {
-					ImmutableList<Other> input = pair.getV2();
+		return from(FluentIterators.zip(this, other));
 
-					if (input.isEmpty()) //This means the second list is shorter than the first and has of out.
-						return pair;
-
-					Tuple2<Type, Other> nextResult = Tuple.of(next, input.head());
-
-					return Tuple.of(pair.getV1().prepend(nextResult), input.tail());
-				}).getV1();
+//		return foldLeft(Tuple.of(Nil.<Tuple2<Type, Other>>nil(), other), (pair, next) -> {
+//					ImmutableList<Other> input = pair.getV2();
+//
+//					if (input.isEmpty()) //This means the second list is shorter than the first and has of out.
+//						return pair;
+//
+//					Tuple2<Type, Other> nextResult = Tuple.of(next, input.head());
+//
+//					return Tuple.of(pair.getV1().prepend(nextResult), input.tail());
+//				}).getV1();
 	}
 
 	default ImmutableList<Tuple2<Type, Integer>> zipWithIndex() {
@@ -166,13 +177,24 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 	}
 
 	default Stream<Type> toStream() {
-		return StreamBuilder.from(this).stream();
+		return GenericUtils.stream(iterator());
+	}
+
+	default boolean equals(ImmutableList<?> other) {
+		if(isEmpty() && other.isEmpty())
+			return true;
+
+		if(Objects.equals(head(), other.head()))
+			return tail().equals(other.tail());
+		else
+			return false;
 	}
 
 	class Link<Type> implements ImmutableList<Type> {
 
 		private final Type head;
 		private final ImmutableList<Type> tail;
+		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
 
 		Link(Type head, ImmutableList<Type> tail) {
 			this.head = head;
@@ -191,6 +213,20 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 			return false;
 		}
 
+		@Override
+		public String toString() {
+			return mkString(", ", "[", "]");
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof ImmutableList && equals((ImmutableList) other);
+		}
+
+		@Override
+		public int hashCode() {
+			return hashcode.apply();
+		}
 	}
 
 
@@ -214,12 +250,28 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		public boolean isEmpty(){
 			return true;
 		}
+
+		@Override
+		public String toString() {
+			return mkString(", ", "[", "]");
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof ImmutableList && equals((ImmutableList) other);
+		}
+
+		@Override
+		public int hashCode() {
+			return 0;
+		}
 	}
 
 	class Join<Type> implements ImmutableList<Type> {
 
 		private final ImmutableList<Type> top;
 		private final ImmutableList<Type> bottom;
+		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
 
 		Join(ImmutableList<Type> top, ImmutableList<Type> bottom) {
 			this.top = top;
@@ -233,7 +285,7 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 
 		@Override
 		public ImmutableList<Type> tail() {
-			ImmutableList<Type> init = top.init();
+			ImmutableList<Type> init = top.tail();
 			if(init.isEmpty())
 				return bottom;
 			else
@@ -244,12 +296,33 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		public boolean isEmpty() {
 			return false;
 		}
+
+		@Override
+		public String toString() {
+			return mkString(", ", "[", "]");
+		}
+
+		@Override
+		public Iterator<Type> iterator() {
+			return new JoiningIterator<>(top.iterator(), bottom.iterator());
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof ImmutableList && equals((ImmutableList) other);
+		}
+
+		@Override
+		public int hashCode() {
+			return hashcode.apply();
+		}
 	}
 
 	class IteratorList<Type> implements ImmutableList<Type> {
 
 		private final Option<Type> head;
 		private final ImmutableList<Type> tail;
+		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
 
 		IteratorList(Iterator<Type> source) {
 			if(source.hasNext()) {
@@ -274,6 +347,75 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		@Override
 		public boolean isEmpty() {
 			return !head.isPresent();
+		}
+
+		@Override
+		public String toString() {
+			return mkString(", ", "[", "]");
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof ImmutableList && equals((ImmutableList) other);
+		}
+
+		@Override
+		public int hashCode() {
+			return hashcode.apply();
+		}
+	}
+
+	class ListList<Type> implements ImmutableList<Type> {
+
+		private final List<Type> array;
+		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
+
+		ListList(List<Type> array) {
+			this.array = array;
+		}
+
+		@Override
+		public Option<Type> headOption() {
+			return array.isEmpty() ? Option.none() : Option.some(array.get(0));
+		}
+
+		@Override
+		public ImmutableList<Type> tail() {
+			if(array.isEmpty()) {
+				return Nil.<Type>nil().tail();
+			} else {
+				return new ListList<>(array.subList(1, array.size()));
+			}
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return array.isEmpty();
+		}
+
+		@Override
+		public List<Type> toList() {
+			return array;
+		}
+
+		@Override
+		public Iterator<Type> iterator() {
+			return array.iterator();
+		}
+
+		@Override
+		public String toString() {
+			return mkString(", ", "[", "]");
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof ImmutableList && equals((ImmutableList) other);
+		}
+
+		@Override
+		public int hashCode() {
+			return hashcode.apply();
 		}
 	}
 

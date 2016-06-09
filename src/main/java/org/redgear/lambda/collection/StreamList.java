@@ -249,7 +249,7 @@ public interface StreamList<T> extends java.util.List<T>, Seq<T> {
 
 	@Override
 	default Set<T> toSet(){
-		return new HashSet<T>(this);
+		return new HashSet<>(this);
 	}
 
 	static <T> StreamList<T> from(java.util.List<T> source){

@@ -152,6 +152,11 @@ public interface Option<Type> extends Iterable<Type> {
 		public Type getOrThrow(Func0<Exception> func) throws Exception{
 			return value;
 		}
+
+		@Override
+		public String toString() {
+			return "Some[" + value + "]";
+		}
 	}
 
 	class None<Type> implements Option<Type> {
@@ -236,6 +241,11 @@ public interface Option<Type> extends Iterable<Type> {
 		@Override
 		public Type getOrThrow(Func0<Exception> func) throws Exception {
 			throw func.checkedApply();
+		}
+
+		@Override
+		public String toString() {
+			return "None";
 		}
 	}
 

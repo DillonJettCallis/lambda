@@ -42,7 +42,6 @@ public class SeqImpl<T> implements Seq<T> {
 	}
 
 	@SafeVarargs
-	@SuppressWarnings("varargs")
 	public static <T> Seq<T> from(T... source){
 		return from(Arrays.stream(source));
 	}

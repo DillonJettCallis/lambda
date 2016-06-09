@@ -351,6 +351,12 @@ public class StreamListImpl<T> implements StreamList<T> {
 	}
 
 	@Override
+	public List<T> toList() {
+		realize();
+		return source;
+	}
+
+	@Override
 	public String toString(){
 		return source.toString();
 	}

@@ -1,9 +1,6 @@
-package org.redgear.lambda.collection;
+package org.redgear.lambda.concurent;
 
-import org.junit.Assert;
 import org.junit.Test;
-import org.redgear.lambda.concurent.Future;
-import org.redgear.lambda.concurent.Promise;
 import org.redgear.lambda.concurent.actor.*;
 import org.redgear.lambda.concurent.actor.MessageDelegator.DelegatingActor;
 import org.redgear.lambda.concurent.actor.MessageDelegator.MessageDelegatorBuilder;
