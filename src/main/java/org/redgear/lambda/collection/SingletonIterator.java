@@ -5,7 +5,7 @@ import java.util.Iterator;
 /**
  * Created by dcallis on 11/16/2015.
  */
-public class SingletonIterator<T> implements Iterator<T> {
+public class SingletonIterator<T> implements FluentIterator<T> {
 
 	private final T item;
 	private boolean next = true;

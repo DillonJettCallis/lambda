@@ -62,7 +62,7 @@ public interface Func3<In1, In2, In3, Out> extends Func<Tuple3<In1, In2, In3>, O
 		return (in3, in2, in1) -> checkedApply(in1, in2, in3);
 	}
 
-	default Func3<In3, In2, In1, Out> lift(Func3<In3, In2, In1, Out> func) {
+	static <In3, In2, In1, Out> Func3<In3, In2, In1, Out> lift(Func3<In3, In2, In1, Out> func) {
 		return func;
 	}
 }

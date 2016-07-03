@@ -5,7 +5,7 @@ import java.util.Iterator;
 /**
  * Created by dcallis on 11/16/2015.
  */
-public class ArrayIterator<T> implements Iterator<T> {
+public class ArrayIterator<T> implements FluentIterator<T> {
 
 	private final T[] source;
 	private final int length;

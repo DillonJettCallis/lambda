@@ -1,6 +1,8 @@
 package org.redgear.lambda.collection.impl;
 
+import org.redgear.lambda.GenericUtils;
 import org.redgear.lambda.collection.Graph;
+import org.redgear.lambda.collection.ImmutableList;
 import org.redgear.lambda.collection.Seq;
 import org.redgear.lambda.control.Option;
 import org.redgear.lambda.function.Func2;
@@ -9,6 +11,7 @@ import org.redgear.lambda.tuple.Tuple2;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 /**
  * Created by LordBlackHole on 6/2/2016.
@@ -98,6 +101,33 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 	@Override
 	public Collection<Tuple2<Vertex, Vertex>> getAllMatchingNodes(Edge edge) {
 		return Seq.from(inner).filter(p -> p.v2.equals(edge)).map(Tuple2::getV1).toSet();
+	}
+
+	@Override
+	public List<Vertex> traverse(Vertex start, Vertex end, Function<? super Edge, ? extends Integer> weight) {
+		Tuple2<ImmutableList<Vertex>, Integer> result = traverse(ImmutableList.from(start), 0, start, end, weight::apply);
+
+		if(result == null)
+			return GenericUtils.list();
+		else {
+			return result.v1.reverse().toList();
+		}
+	}
+
+	private Tuple2<ImmutableList<Vertex>, Integer> traverse(ImmutableList<Vertex> working, int value, Vertex start, Vertex end, ToIntFunction<? super Edge> weight) {
+		if(start == end)
+			return Tuple.of(working, value);
+
+		Set<Vertex> checked = working.toSet();
+		Collection<Tuple2<Vertex, Edge>> relations = getAllRelationships(start);
+
+		return Seq.from(relations)
+				.filter(t -> !checked.contains(t.v1))
+				.map(v -> traverse(working.prepend(v.v1), value + weight.applyAsInt(v.v2), v.v1, end, weight))
+				.filter(Objects::nonNull)
+				.sorted(Comparator.comparingInt(Tuple2::getV2))
+				.headOption()
+				.orNull();
 	}
 
 	private static <Vertex, Edge> Node<Vertex, Edge> node(Vertex first, Vertex second, Edge edge) {

@@ -2,6 +2,7 @@ package org.redgear.lambda.collection;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.redgear.lambda.GenericUtils;
 import org.redgear.lambda.function.Consumer2;
 import org.redgear.lambda.function.Func3;
 import org.redgear.lambda.tuple.Tuple;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -222,5 +225,19 @@ public class GraphTest {
 		graph.addEdge("Second", "Third", 5);
 
 		assertEquals(Tuple.of("First", "Second"), graph.getAllMatchingNodes(1).iterator().next());
+	}
+
+	@Test
+	public void traversalSimpleTest() {
+		Graph<String, Integer> graph = Graph.graph();
+
+		graph.addEdge("First", "Second", 1);
+		graph.addEdge("Third", "First", 2);
+		graph.addEdge("Second", "Fourth", 3);
+		graph.addEdge("Fourth", "First", 4);
+		graph.addEdge("Second", "Third", 5);
+
+
+		assertEquals(GenericUtils.list("First", "Second", "Fourth"), graph.traverse("First", "Fourth", Function.identity()));
 	}
 }

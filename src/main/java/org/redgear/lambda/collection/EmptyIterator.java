@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 /**
  * Created by dcallis on 4/1/2016.
  */
-public class EmptyIterator<T> implements Iterator<T> {
+public class EmptyIterator<T> implements FluentIterator<T> {
 
 	public static final EmptyIterator<?> instance = new EmptyIterator<>();
 
@@ -15,8 +15,8 @@ public class EmptyIterator<T> implements Iterator<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> Iterator<T> instance() {
-		return (Iterator<T>) instance;
+	public static <T> FluentIterator<T> instance() {
+		return (FluentIterator<T>) instance;
 	}
 
 	@Override

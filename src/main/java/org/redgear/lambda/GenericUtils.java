@@ -26,16 +26,16 @@ import java.util.stream.StreamSupport;
  */
 public class GenericUtils {
 
-	public static <T> Iterator<T> iterator() {
+	public static <T> FluentIterator<T> iterator() {
 		return EmptyIterator.instance();
 	}
 
-	public static <T> Iterator<T> iterator(T args) {
+	public static <T> FluentIterator<T> iterator(T args) {
 		return args == null ? iterator() : new SingletonIterator<>(args);
 	}
 
 	@SafeVarargs
-	public static <T> Iterator<T> iterator(T... args) {
+	public static <T> FluentIterator<T> iterator(T... args) {
 		return args == null ? iterator() : new ArrayIterator<>(args);
 	}
 
@@ -449,7 +449,15 @@ public class GenericUtils {
 		return func;
 	}
 
+	public static <Out> Func0<Out> func0(Func0<Out> func) {
+		return func;
+	}
+
 	public static <In1, Out> Func1<In1, Out> func(Func1<In1, Out> func) {
+		return func;
+	}
+
+	public static <In1, Out> Func1<In1, Out> func1(Func1<In1, Out> func) {
 		return func;
 	}
 
@@ -457,7 +465,15 @@ public class GenericUtils {
 		return func;
 	}
 
+	public static <In1, In2, Out> Func2<In1, In2, Out> func2(Func2<In1, In2, Out> func) {
+		return func;
+	}
+
 	public static <In1, In2, In3, Out> Func3<In1, In2, In3, Out> func(Func3<In1, In2, In3, Out> func) {
+		return func;
+	}
+
+	public static <In1, In2, In3, Out> Func3<In1, In2, In3, Out> func3(Func3<In1, In2, In3, Out> func) {
 		return func;
 	}
 
@@ -466,7 +482,15 @@ public class GenericUtils {
 		return func;
 	}
 
+	public static <In1, In2, In3, In4, Out> Func4<In1, In2, In3, In4, Out> func4(Func4<In1, In2, In3, In4, Out> func) {
+		return func;
+	}
+
 	public static <In1, In2, In3, In4, In5, Out> Func5<In1, In2, In3, In4, In5, Out> func(Func5<In1, In2, In3, In4, In5, Out> func) {
+		return func;
+	}
+
+	public static <In1, In2, In3, In4, In5, Out> Func5<In1, In2, In3, In4, In5, Out> func5(Func5<In1, In2, In3, In4, In5, Out> func) {
 		return func;
 	}
 

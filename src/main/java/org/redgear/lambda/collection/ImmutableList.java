@@ -2,7 +2,7 @@ package org.redgear.lambda.collection;
 
 import org.redgear.lambda.GenericUtils;
 import org.redgear.lambda.Lazy;
-import org.redgear.lambda.collection.impl.FluentIterators;
+import org.redgear.lambda.collection.impl.FluentIterables;
 import org.redgear.lambda.control.Option;
 import org.redgear.lambda.tuple.Tuple;
 import org.redgear.lambda.tuple.Tuple2;
@@ -32,6 +32,8 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 	}
 
 	ImmutableList<Type> tail();
+
+	int size();
 
 	@Override
 	default Type last() {
@@ -157,7 +159,7 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 	}
 
 	default <Other> ImmutableList<Tuple2<Type, Other>> zip(ImmutableList<Other> other) {
-		return from(FluentIterators.zip(this, other));
+		return from(FluentIterables.zip(this, other));
 
 //		return foldLeft(Tuple.of(Nil.<Tuple2<Type, Other>>nil(), other), (pair, next) -> {
 //					ImmutableList<Other> input = pair.getV2();
@@ -194,23 +196,33 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 
 		private final Type head;
 		private final ImmutableList<Type> tail;
+		private final int size;
 		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
 
 		Link(Type head, ImmutableList<Type> tail) {
 			this.head = head;
 			this.tail = tail;
+			this.size = tail.size() + 1;
 		}
 
+		@Override
 		public Option<Type> headOption() {
 			return some(head);
 		}
 
+		@Override
 		public ImmutableList<Type> tail() {
 			return tail;
 		}
 
+		@Override
 		public boolean isEmpty(){
 			return false;
+		}
+
+		@Override
+		public int size() {
+			return size;
 		}
 
 		@Override
@@ -252,6 +264,11 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		}
 
 		@Override
+		public int size() {
+			return 0;
+		}
+
+		@Override
 		public String toString() {
 			return mkString(", ", "[", "]");
 		}
@@ -271,11 +288,13 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 
 		private final ImmutableList<Type> top;
 		private final ImmutableList<Type> bottom;
+		private final int size;
 		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
 
 		Join(ImmutableList<Type> top, ImmutableList<Type> bottom) {
 			this.top = top;
 			this.bottom = bottom;
+			this.size = top.size() + bottom.size();
 		}
 
 		@Override
@@ -295,6 +314,11 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		@Override
 		public boolean isEmpty() {
 			return false;
+		}
+
+		@Override
+		public int size() {
+			return size;
 		}
 
 		@Override
@@ -322,15 +346,18 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 
 		private final Option<Type> head;
 		private final ImmutableList<Type> tail;
+		private final int size;
 		private final Lazy<Integer> hashcode = Lazy.of(() -> toList().hashCode());
 
 		IteratorList(Iterator<Type> source) {
 			if(source.hasNext()) {
 				head = Option.some(source.next());
 				tail = new IteratorList<>(source);
+				size = tail.size() + 1;
 			} else {
 				head = Option.none();
 				tail = nil();
+				size = 0;
 			}
 		}
 
@@ -347,6 +374,11 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		@Override
 		public boolean isEmpty() {
 			return !head.isPresent();
+		}
+
+		@Override
+		public int size() {
+			return size;
 		}
 
 		@Override
@@ -394,6 +426,11 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 		}
 
 		@Override
+		public int size() {
+			return array.size();
+		}
+
+		@Override
 		public List<Type> toList() {
 			return array;
 		}
@@ -426,6 +463,7 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 			return from(source.iterator());
 	}
 
+	@SafeVarargs
 	static <T> ImmutableList<T> from(T... source) {
 		return from(new ArrayIterator<>(source));
 	}

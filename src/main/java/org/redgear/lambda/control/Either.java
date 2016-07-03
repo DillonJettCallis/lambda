@@ -24,6 +24,18 @@ public interface Either<L, R> {
 		return new RightProjection<>(this);
 	}
 
+	L getLeft();
+
+	R getRight();
+
+	static <L, R> Either<L, R> left(L value) {
+		return new Left<>(value);
+	}
+
+	static <L, R> Either<L, R> right(R value) {
+		return new Right<>(value);
+	}
+
 	class Left<L, R> implements Either<L, R> {
 
 		private final L value;
@@ -35,6 +47,16 @@ public interface Either<L, R> {
 		@Override
 		public boolean isLeft() {
 			return true;
+		}
+
+		@Override
+		public L getLeft() {
+			return value;
+		}
+
+		@Override
+		public R getRight() {
+			throw new NoSuchElementException("Attempt to call getRight() on Either.Left");
 		}
 	}
 
@@ -51,6 +73,16 @@ public interface Either<L, R> {
 			return false;
 		}
 
+		@Override
+		public L getLeft() {
+			throw new NoSuchElementException("Attempt to call getLeft() on Either.Right");
+		}
+
+		@Override
+		public R getRight() {
+			return value;
+		}
+
 	}
 
 	abstract class Projection<L, R> {
@@ -62,11 +94,11 @@ public interface Either<L, R> {
 		}
 
 
-		L asLeft() {
+		public L asLeft() {
 			return ((Left<L, R>) either).value;
 		}
 
-		R asRight() {
+		public R asRight() {
 			return ((Right<L, R>) either).value;
 		}
 
@@ -79,7 +111,7 @@ public interface Either<L, R> {
 		}
 
 		@SuppressWarnings("unchecked")
-		<Next> LeftProjection<Next, R> map(Func<L, Next> func){
+		public <Next> LeftProjection<Next, R> map(Func<L, Next> func){
 			if(either.isLeft()){
 				return new Left<Next, R>(func.apply(asLeft())).left();
 			} else {
@@ -88,7 +120,7 @@ public interface Either<L, R> {
 		}
 
 		@SuppressWarnings("unchecked")
-		<Next> LeftProjection<Next, R> flatMap(Func<L, Either<Next, R>> func){
+		public <Next> LeftProjection<Next, R> flatMap(Func<L, Either<Next, R>> func){
 			if(either.isLeft()){
 				return func.apply(asLeft()).left();
 			} else {
@@ -96,7 +128,7 @@ public interface Either<L, R> {
 			}
 		}
 
-		Option<L> filter(Func<L, Boolean> func) {
+		public Option<L> filter(Func<L, Boolean> func) {
 			if(either.isLeft() && func.apply(asLeft())){
 				return Option.some(asLeft());
 			} else {
@@ -104,7 +136,7 @@ public interface Either<L, R> {
 			}
 		}
 
-		Option<L> toOption() {
+		public Option<L> toOption() {
 			if(either.isLeft()){
 				return Option.some(asLeft());
 			} else {
@@ -112,9 +144,17 @@ public interface Either<L, R> {
 			}
 		}
 
-		void forEach(Func<L, ?> func) {
+		public void forEach(Func<L, ?> func) {
 			if(either.isLeft())
 				func.apply(asLeft());
+		}
+
+		public L get() {
+			if(either.isLeft())
+				return asLeft();
+			else {
+				throw new NoSuchElementException("Attempt to call get() on an empty Either LeftProjection");
+			}
 		}
 	}
 
@@ -125,7 +165,7 @@ public interface Either<L, R> {
 		}
 
 		@SuppressWarnings("unchecked")
-		<Next> RightProjection<L, Next> map(Func<R, Next> func){
+		public <Next> RightProjection<L, Next> map(Func<R, Next> func){
 			if(either.isRight()){
 				return new Right<L, Next>(func.apply(asRight())).right();
 			} else {
@@ -134,7 +174,7 @@ public interface Either<L, R> {
 		}
 
 		@SuppressWarnings("unchecked")
-		<Next> RightProjection<L, Next> flatMap(Func<R, Either<L, Next>> func){
+		public <Next> RightProjection<L, Next> flatMap(Func<R, Either<L, Next>> func){
 			if(either.isRight()){
 				return func.apply(asRight()).right();
 			} else {
@@ -142,7 +182,7 @@ public interface Either<L, R> {
 			}
 		}
 
-		Option<R> filter(Func<R, Boolean> func) {
+		public Option<R> filter(Func<R, Boolean> func) {
 			if(either.isRight() && func.apply(asRight())){
 				return Option.some(asRight());
 			} else {
@@ -150,7 +190,7 @@ public interface Either<L, R> {
 			}
 		}
 
-		Option<R> toOption() {
+		public Option<R> toOption() {
 			if(either.isRight()){
 				return Option.some(asRight());
 			} else {
@@ -158,9 +198,17 @@ public interface Either<L, R> {
 			}
 		}
 
-		void forEach(Func<R, ?> func) {
+		public void forEach(Func<R, ?> func) {
 			if(either.isRight())
 				func.apply(asRight());
+		}
+
+		public R get() {
+			if(either.isRight())
+				return asRight();
+			else {
+				throw new NoSuchElementException("Attempt to call get() on an empty Either RightProjection");
+			}
 		}
 	}
 

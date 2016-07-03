@@ -2,6 +2,7 @@ package org.redgear.lambda.function;
 
 import org.redgear.lambda.control.Try;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -16,6 +17,11 @@ public interface Func0<Out> extends Func<Void, Out>, Supplier<Out> {
 
 	default Out get() {
 		return apply();
+	}
+
+	@Override
+	default <Last> Func0<Last> andThen(Function<? super Out, ? extends Last> other) {
+		return () -> other.apply(apply());
 	}
 
 	Out checkedApply() throws Exception;

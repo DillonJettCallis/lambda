@@ -20,11 +20,13 @@ public interface Func<In, Out> extends Function<In, Out>{
 		return 1;
 	}
 
-	default <Last> Func<In, Last> andThen(Func<Out, Last> other) {
+	@Override
+	default <Last> Func<In, Last> andThen(Function<? super Out, ? extends Last> other) {
 		return in -> other.apply(apply(in));
 	}
 
-	default <First> Func<First, Out> compose(Func<First, In> other) {
+	@Override
+	default <First> Func<First, Out> compose(Function<? super First, ? extends In> other) {
 		return first -> apply(other.apply(first));
 	}
 

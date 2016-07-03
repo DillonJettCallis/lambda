@@ -21,7 +21,7 @@ public class LazyList<T> extends AbstractList<T> implements Traversable<T> {
 	private Iterator<T> source;
 	private final ArrayList<T> list;
 
-	public LazyList(Iterator<T> source){
+	private LazyList(Iterator<T> source){
 		this.source = source;
 		this.list = new ArrayList<>();
 	}
@@ -45,6 +45,7 @@ public class LazyList<T> extends AbstractList<T> implements Traversable<T> {
 			return new LazyList<>(source.iterator());
 	}
 
+	@SafeVarargs
 	public static <T> LazyList<T> from(T... source){
 		return new LazyList<>(new ArrayIterator<>(source));
 	}

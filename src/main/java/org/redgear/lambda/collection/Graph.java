@@ -6,6 +6,7 @@ import org.redgear.lambda.tuple.Tuple2;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -43,6 +44,8 @@ public interface Graph<Vertex, Edge> {
 	Collection<Tuple2<Vertex, Edge>> getAllRelationships(Vertex vertex);
 
 	Collection<Tuple2<Vertex, Vertex>> getAllMatchingNodes(Edge edge);
+
+	List<Vertex> traverse(Vertex start, Vertex end, Function<? super Edge, ? extends Integer> weight);
 
 	public interface Node<Vertex, Edge> {
 
