@@ -1,8 +1,6 @@
 package org.redgear.lambda.tuple;
 
-import org.redgear.lambda.function.Func;
-import org.redgear.lambda.function.Func1;
-import org.redgear.lambda.function.Func3;
+import java.util.function.Function;
 
 /**
  * Created by dcallis on 11/23/2015.
@@ -24,19 +22,19 @@ public class Tuple3<T1, T2, T3> implements Tuple {
 		return 3;
 	}
 
-	public <R1, R2, R3> Tuple3<R1, R2, R3> map(Func3<T1, T2, T3, Tuple3<R1, R2, R3>> func) {
+	public <R1, R2, R3> Tuple3<R1, R2, R3> map(Function<Tuple3<T1, T2, T3>, Tuple3<R1, R2, R3>> func) {
 		return func.apply(this);
 	}
 
-	public <R1> Tuple3<R1, T2, T3> map1(Func1<T1, R1> func) {
+	public <R1> Tuple3<R1, T2, T3> map1(Function<T1, R1> func) {
 		return Tuple.of(func.apply(v1), v2, v3);
 	}
 
-	public <R2> Tuple3<T1, R2, T3> map2(Func1<T2, R2> func) {
+	public <R2> Tuple3<T1, R2, T3> map2(Function<T2, R2> func) {
 		return Tuple.of(v1, func.apply(v2), v3);
 	}
 
-	public <R3> Tuple3<T1, T2, R3> map3(Func1<T3, R3> func) {
+	public <R3> Tuple3<T1, T2, R3> map3(Function<T3, R3> func) {
 		return Tuple.of(v1, v2, func.apply(v3));
 	}
 

@@ -8,6 +8,8 @@ import org.redgear.lambda.control.Option;
 import org.redgear.lambda.function.Func2;
 import org.redgear.lambda.tuple.Tuple;
 import org.redgear.lambda.tuple.Tuple2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Function;
@@ -18,6 +20,7 @@ import java.util.function.ToIntFunction;
  */
 public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 
+	private static final Logger log = LoggerFactory.getLogger(GraphImpl.class);
 	private final Map<Tuple2<Vertex, Vertex>, Edge> inner = new HashMap<>();
 	private final Comparator<? super Vertex> comparator;
 
@@ -56,6 +59,12 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 
 	@Override
 	public void addEdge(Vertex first, Vertex second, Edge edge) {
+		if(first == null || second == null)
+			throw new IllegalArgumentException("Null Vertexes are not allowed.");
+
+		if(first.equals(second))
+			throw new IllegalArgumentException("Vertex can't have an edge with itself.");
+
 		inner.put(tuple(first, second), edge);
 	}
 
@@ -105,29 +114,33 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 
 	@Override
 	public List<Vertex> traverse(Vertex start, Vertex end, Function<? super Edge, ? extends Integer> weight) {
-		Tuple2<ImmutableList<Vertex>, Integer> result = traverse(ImmutableList.from(start), 0, start, end, weight::apply);
+		List<Tuple2<ImmutableList<Vertex>, Integer>> sorted = GenericUtils.list(Tuple.of(ImmutableList.from(start), 0));
+		Set<Vertex> checked = GenericUtils.set(start);
 
-		if(result == null)
-			return GenericUtils.list();
-		else {
-			return result.v1.reverse().toList();
+		while(!sorted.isEmpty()) {
+			log.info("Sorted: {}", sorted);
+
+			Tuple2<ImmutableList<Vertex>, Integer> next = sorted.remove(0);
+
+			if(next.v1.head().equals(end))
+				return next.v1.reverse().toList();
+
+			checked.add(next.v1.head());
+
+			for(Tuple2<Vertex, Edge> pair : getAllRelationships(next.v1.head())){
+
+				if(!checked.contains(pair.v1)) {
+
+					sorted.add(Tuple.of(next.v1.prepend(pair.v1), next.v2 + weight.apply(pair.v2)));
+				}
+			}
+
+			Collections.sort(sorted, Comparator.comparing(Tuple2::getV2));
+
 		}
-	}
 
-	private Tuple2<ImmutableList<Vertex>, Integer> traverse(ImmutableList<Vertex> working, int value, Vertex start, Vertex end, ToIntFunction<? super Edge> weight) {
-		if(start == end)
-			return Tuple.of(working, value);
-
-		Set<Vertex> checked = working.toSet();
-		Collection<Tuple2<Vertex, Edge>> relations = getAllRelationships(start);
-
-		return Seq.from(relations)
-				.filter(t -> !checked.contains(t.v1))
-				.map(v -> traverse(working.prepend(v.v1), value + weight.applyAsInt(v.v2), v.v1, end, weight))
-				.filter(Objects::nonNull)
-				.sorted(Comparator.comparingInt(Tuple2::getV2))
-				.headOption()
-				.orNull();
+		//No chain found
+		return GenericUtils.list();
 	}
 
 	private static <Vertex, Edge> Node<Vertex, Edge> node(Vertex first, Vertex second, Edge edge) {

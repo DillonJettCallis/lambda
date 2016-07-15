@@ -1,8 +1,5 @@
 package org.redgear.lambda.tuple;
 
-import org.redgear.lambda.function.Func1;
-import org.redgear.lambda.function.Func4;
-
 import java.util.function.Function;
 
 /**
@@ -29,7 +26,7 @@ public class Tuple4<T1, T2, T3, T4> implements Tuple{
 		return 4;
 	}
 
-	public <R> R map(Func4<T1, T2, T3, T4, R> func) {
+	public <R> R map(Function<Tuple4<T1, T2, T3, T4>, R> func) {
 		return func.apply(this);
 	}
 

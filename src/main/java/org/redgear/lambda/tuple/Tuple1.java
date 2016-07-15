@@ -1,6 +1,6 @@
 package org.redgear.lambda.tuple;
 
-import org.redgear.lambda.function.Func1;
+import java.util.function.Function;
 
 /**
  * Created by dcallis on 11/20/2015.
@@ -27,11 +27,11 @@ public class Tuple1<T1> implements Tuple {
 		return v1;
 	}
 
-	public <R1> Tuple1<R1> map(Func1<T1, R1> func) {
+	public <R1> Tuple1<R1> map(Function<T1, R1> func) {
 		return Tuple.of(func.apply(v1));
 	}
 
-	public <R1> Tuple1<R1> map1(Func1<T1, R1> func) {
+	public <R1> Tuple1<R1> map1(Function<T1, R1> func) {
 		return Tuple.of(func.apply(v1));
 	}
 

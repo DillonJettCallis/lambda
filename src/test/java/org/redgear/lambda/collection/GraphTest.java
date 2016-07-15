@@ -234,9 +234,8 @@ public class GraphTest {
 		graph.addEdge("First", "Second", 1);
 		graph.addEdge("Third", "First", 2);
 		graph.addEdge("Second", "Fourth", 3);
-		graph.addEdge("Fourth", "First", 4);
-		graph.addEdge("Second", "Third", 5);
-
+		graph.addEdge("Fourth", "First", 5);
+		graph.addEdge("Second", "Third", 4);
 
 		assertEquals(GenericUtils.list("First", "Second", "Fourth"), graph.traverse("First", "Fourth", Function.identity()));
 	}
