@@ -1,15 +1,12 @@
 package org.redgear.lambda.collection;
 
 import org.junit.Test;
-import org.redgear.lambda.GenericUtils;
 import org.redgear.lambda.control.Option;
-import org.redgear.lambda.function.Consumer1;
 import org.redgear.lambda.function.Func2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertFalse;
@@ -220,7 +217,7 @@ public class ImmutableListTest {
 	public void hashCodeTest() {
 		int firstCode = ImmutableList.from(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10).hashCode();
 
-		int secondCode = GenericUtils.list(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10).hashCode();
+		int secondCode = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10).hashCode();
 
 		assertEquals(secondCode, firstCode);
 	}

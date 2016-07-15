@@ -1,8 +1,6 @@
 package org.redgear.lambda.collection;
 
-import org.junit.Assert;
 import org.junit.Test;
-import org.redgear.lambda.GenericUtils;
 import org.redgear.lambda.function.Consumer2;
 import org.redgear.lambda.function.Func3;
 import org.redgear.lambda.tuple.Tuple;
@@ -10,15 +8,13 @@ import org.redgear.lambda.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by LordBlackHole on 6/2/2016.
@@ -237,6 +233,6 @@ public class GraphTest {
 		graph.addEdge("Fourth", "First", 5);
 		graph.addEdge("Second", "Third", 4);
 
-		assertEquals(GenericUtils.list("First", "Second", "Fourth"), graph.traverse("First", "Fourth", Function.identity()));
+		assertEquals(Arrays.asList("First", "Second", "Fourth"), graph.traverse("First", "Fourth", Function.identity()));
 	}
 }

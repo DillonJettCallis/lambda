@@ -112,8 +112,10 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 
 	@Override
 	public List<Vertex> traverse(Vertex start, Vertex end, Function<? super Edge, ? extends Integer> weight) {
-		List<Tuple2<ImmutableList<Vertex>, Integer>> sorted = Collections.singletonList(Tuple.of(ImmutableList.from(start), 0));
-		Set<Vertex> checked = Collections.singleton(start);
+		List<Tuple2<ImmutableList<Vertex>, Integer>> sorted = new ArrayList<>();
+		sorted.add(Tuple.of(ImmutableList.from(start), 0));
+		Set<Vertex> checked = new HashSet<>();
+		checked.add(start);
 
 		while(!sorted.isEmpty()) {
 			log.info("Sorted: {}", sorted);
@@ -138,7 +140,7 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 		}
 
 		//No chain found
-		return Collections.emptyList();
+		return new ArrayList<>();
 	}
 
 	private static <Vertex, Edge> Node<Vertex, Edge> node(Vertex first, Vertex second, Edge edge) {

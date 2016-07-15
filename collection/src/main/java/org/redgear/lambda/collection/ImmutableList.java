@@ -180,7 +180,7 @@ public interface ImmutableList<Type> extends Traversable<Type> {
 	}
 
 	default Stream<Type> toStream() {
-		return toList().stream();
+		return StreamBuilder.from(iterator()).stream();
 	}
 
 	default boolean equals(ImmutableList<?> other) {

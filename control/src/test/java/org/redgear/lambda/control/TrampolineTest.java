@@ -2,9 +2,8 @@ package org.redgear.lambda.control;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.redgear.lambda.tuple.Tuple;
 import org.redgear.lambda.tuple.Tuple3;
-
-import static org.redgear.lambda.GenericUtils.*;
 
 /**
  * Created by LordBlackHole on 6/18/2016.
@@ -24,19 +23,23 @@ public class TrampolineTest {
 	 * The public facing code that hides the recursion and trampoline.
 	 */
 	private int fibonacci(int index) {
-		Trampoline<Tuple3<Integer, Integer, Integer>, Integer> trampoline = Trampoline.of(func3(this::fibonacci));
+		Trampoline<Tuple3<Integer, Integer, Integer>, Integer> trampoline = Trampoline.of(this::fibonacci);
 
-		return trampoline.apply(tuple(0, 1, index));
+		return trampoline.apply(Tuple.of(0, 1, index));
 	}
 
 	/**
 	 * The private recursive impl.
 	 */
-	private Either<Tuple3<Integer, Integer, Integer>, Integer> fibonacci(Integer first, Integer second, Integer index) {
+	private Either<Tuple3<Integer, Integer, Integer>, Integer> fibonacci(Tuple3<Integer, Integer, Integer> args) {
+		int first = args.v1;
+		int second = args.v2;
+		int index = args.v3;
+
 		if(index == 0)
-			return right(first);
+			return Either.right(first);
 		else
-			return left(tuple(second, first + second, --index));
+			return Either.left(Tuple.of(second, first + second, --index));
 	}
 
 }

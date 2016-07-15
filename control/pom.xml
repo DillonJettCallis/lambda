@@ -11,5 +11,12 @@
 
     <artifactId>lambda-control</artifactId>
 
-
+    <dependencies>
+        <dependency>
+            <groupId>com.redgear</groupId>
+            <artifactId>lambda-tuple</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
