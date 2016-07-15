@@ -10,6 +10,11 @@
     <version>1.0.0-SNAPSHOT</version>
     <modules>
         <module>tuple</module>
+        <module>function</module>
+        <module>control</module>
+        <module>concurrent</module>
+        <module>collection</module>
+        <module>all</module>
     </modules>
 
     <properties>
@@ -37,7 +42,6 @@
 	</repositories>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
