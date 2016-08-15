@@ -1,7 +1,5 @@
 package org.redgear.lambda.collection;
 
-import java.util.Iterator;
-
 /**
  * Created by dcallis on 11/16/2015.
  */
@@ -10,8 +8,12 @@ public class SingletonIterator<T> implements FluentIterator<T> {
 	private final T item;
 	private boolean next = true;
 
-	public SingletonIterator(T item){
+	private SingletonIterator(T item){
 		this.item = item;
+	}
+
+	public static <T> SingletonIterator<T> from(T item){
+		return new SingletonIterator<>(item);
 	}
 
 	@Override

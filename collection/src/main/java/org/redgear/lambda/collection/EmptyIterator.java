@@ -14,6 +14,10 @@ public class EmptyIterator<T> implements FluentIterator<T> {
 
 	}
 
+	public static <T> FluentIterator<T> from() {
+		return instance();
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <T> FluentIterator<T> instance() {
 		return (FluentIterator<T>) instance;

@@ -27,11 +27,6 @@ public interface StreamBuilder<T> {
 		return Seq.from(stream());
 	}
 
-	default StreamList<T> streamList() {
-		return StreamList.from(stream());
-	}
-
-
 	static <T> StreamBuilder<T> from(Supplier<Option<T>> source) {
 		return new SupplierStreamBuilder<>(source);
 	}

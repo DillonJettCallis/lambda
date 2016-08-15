@@ -48,7 +48,7 @@ public class MultiMapListImpl<Key, Value> implements MultiMapList<Key,Value> {
 
 	@Override
 	public boolean containsValue(Value value) {
-		return Seq.from(inner).flatMapIt(Tuple2::getV2).anyMatch(value::equals);
+		return Seq.from(inner).flatMap(Tuple2::getV2).anyMatch(value::equals);
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class MultiMapListImpl<Key, Value> implements MultiMapList<Key,Value> {
 
 	@Override
 	public Collection<Value> allValues() {
-		return Seq.from(inner.values()).flatMapIt(Function.identity()).toList();
+		return Seq.from(inner.values()).flatMap(Function.identity()).toList();
 	}
 
 	@Override
@@ -107,6 +107,6 @@ public class MultiMapListImpl<Key, Value> implements MultiMapList<Key,Value> {
 
 	@Override
 	public Collection<Tuple2<Key, Value>> pairs() {
-		return Seq.from(inner).flatMapIt(Func2.lift((key, values) -> Seq.from(values).map(value -> Tuple.of(key, value)))).toList();
+		return Seq.from(inner).flatMap(Func2.lift((key, values) -> Seq.from(values).map(value -> Tuple.of(key, value)))).toList();
 	}
 }

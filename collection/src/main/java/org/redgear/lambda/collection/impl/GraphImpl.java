@@ -1,7 +1,7 @@
 package org.redgear.lambda.collection.impl;
 
 import org.redgear.lambda.collection.Graph;
-import org.redgear.lambda.collection.ImmutableList;
+import org.redgear.lambda.collection.Chain;
 import org.redgear.lambda.collection.Seq;
 import org.redgear.lambda.control.Option;
 import org.redgear.lambda.function.Func2;
@@ -94,7 +94,7 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 	@Override
 	public Collection<Tuple2<Vertex, Edge>> getAllRelationships(Vertex vertex) {
 		return Seq.from(inner)
-				.flatMapIt(Func2.lift(( t, edge) -> {
+				.flatMap(Func2.lift(( t, edge) -> {
 
 			if(t.v1.equals(vertex))
 				return Option.some(Tuple.of(t.v2, edge));
@@ -112,15 +112,15 @@ public class GraphImpl<Vertex, Edge> implements Graph<Vertex, Edge> {
 
 	@Override
 	public List<Vertex> traverse(Vertex start, Vertex end, Function<? super Edge, ? extends Integer> weight) {
-		List<Tuple2<ImmutableList<Vertex>, Integer>> sorted = new ArrayList<>();
-		sorted.add(Tuple.of(ImmutableList.from(start), 0));
+		List<Tuple2<Chain<Vertex>, Integer>> sorted = new ArrayList<>();
+		sorted.add(Tuple.of(Chain.from(start), 0));
 		Set<Vertex> checked = new HashSet<>();
 		checked.add(start);
 
 		while(!sorted.isEmpty()) {
 			log.info("Sorted: {}", sorted);
 
-			Tuple2<ImmutableList<Vertex>, Integer> next = sorted.remove(0);
+			Tuple2<Chain<Vertex>, Integer> next = sorted.remove(0);
 
 			if(next.v1.head().equals(end))
 				return next.v1.reverse().toList();

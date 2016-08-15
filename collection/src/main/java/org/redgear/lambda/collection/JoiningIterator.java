@@ -1,5 +1,8 @@
 package org.redgear.lambda.collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -9,34 +12,42 @@ import java.util.NoSuchElementException;
  */
 public class JoiningIterator<T> implements FluentIterator<T> {
 
-	private Iterator<? extends T> first;
-	private Iterator<? extends T> second;
+	private Iterator<? extends Iterator<? extends T>> source;
+	private Iterator<? extends T> current;
 
-	public JoiningIterator(Iterator<? extends T> first, Iterator<? extends T> second){
-		this.first = first;
-		this.second = second;
+	private JoiningIterator(Iterator<? extends Iterator<? extends T>> source) {
+		this.source = source;
 	}
 
+	@SafeVarargs
+	public static <T> JoiningIterator<T> from(Iterator<? extends T>... source) {
+		return new JoiningIterator<>(ArrayIterator.from(source));
+	}
+
+	public static <T> JoiningIterator<T> from(Iterator<? extends Iterator<? extends T>> source) {
+		return new JoiningIterator<>(source);
+	}
+
+	private boolean advance() {
+		if(source != null && source.hasNext()) {
+			current = source.next();
+			return hasNext();
+		} else {
+			//No more elements. Set current and source to null to GC them.
+			current = null;
+			source = null;
+			return false;
+		}
+	}
 
 	@Override
 	public boolean hasNext() {
-		return first.hasNext() || second.hasNext();
+		return current != null && current.hasNext() || advance();
 	}
 
 	@Override
 	public T next() {
-		//Dropping the iterators after they're empty means letting them be GC'd, which could be handy if they're holding onto big collections we don't need.
-
-		if(first.hasNext())
-			return first.next();
-		else
-			first = EmptyIterator.instance();
-
-		if(second.hasNext())
-			return second.next();
-		else
-			second = EmptyIterator.instance();
-
-		throw new NoSuchElementException("No more elements");
+		T next = current.next();
+		return next;
 	}
 }

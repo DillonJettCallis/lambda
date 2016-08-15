@@ -1,177 +1,60 @@
 package org.redgear.lambda.collection;
 
 import org.redgear.lambda.collection.impl.SeqImpl;
-import org.redgear.lambda.control.Option;
-import org.redgear.lambda.function.Func1;
 import org.redgear.lambda.tuple.Tuple2;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.*;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
  * Created by dcallis on 1/1/2016.
  */
-public interface Seq<T> extends Stream<T>, Traversable<T> {
-
-	@Override
-	Iterator<T> iterator();
+public interface Seq<T> extends Iterable<T>, Monadic<T>, Convertable<T>, Concatable<T>, Slicable<T>, Ordered<T> {
 
 	@Override
 	<R> Seq<R> map(Function<? super T, ? extends R> func);
 
 	@Override
-	Seq<T> filter(Predicate<? super T> predicate);
+	Seq<T> filter(Function<? super T, ? extends Boolean> predicate);
 
 	@Override
-	<R> Seq<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper);
-
-	<R> Seq<R> flatMapIt(Function<? super T, ? extends Iterable<R>> function);
-
-	<R> Seq<R> flatMapOp(Function<? super T, ? extends Optional<? extends R>> function);
-
-	@Override
-	Seq<T> distinct();
-
-	@Override
-	Seq<T> sorted();
-
-	@Override
-	Seq<T> sorted(Comparator<? super T> comparator);
+	<R> Seq<R> flatMap(Function<? super T, ? extends Iterable<? extends R>> mapper);
 
 	@Override
 	Seq<T> peek(Consumer<? super T> action);
 
 	@Override
-	Seq<T> limit(long maxSize);
+	Seq<T> concat(T... source);
 
 	@Override
-	Seq<T> skip(long n);
+	Seq<T> concat(Iterator<T> source);
 
-	T fold(T start, BiFunction<? super T, ? super T, ? extends T> func);
+	@Override
+	Seq<T> concat(Iterable<T> source);
 
-	<R> R foldLeft(R start, BiFunction<? super R, ? super T, ? extends R> func);
+	@Override
+	Seq<T> concat(Collection<T> source);
 
-	<R> R foldRight(R start, BiFunction<? super T, ? super R, ? extends R> func);
+	@Override
+	Seq<T> concat(Stream<T> source);
 
+	@Override
+	Seq<T> concat(Seq<T> source);
 
-	default Seq<T> drop(int num) {
-		return skip(num);
-	}
+	@Override
+	<U> Seq<Tuple2<T, U>> zip(Iterator<U> other);
 
-	default Seq<T> dropWhile(Function<? super T, Boolean> func) {
-		AtomicBoolean test = new AtomicBoolean(false);
+	@Override
+	<U, R> Seq<R> zipWith(Iterator<U> other, BiFunction<? super T, ? super U, ? extends R> func);
 
-		return filter(item -> {
-			if(test.get())
-				return true;
-			else {
-				boolean result = func.apply(item);
+	@Override
+	Seq<Tuple2<T, Integer>> zipWithIndex();
 
-				if(result)
-					return false;
-				else {
-					test.set(true);
-					return true;
-				}
-			}
-
-		});
-	}
-
-	default Seq<T> dropUntil(Function<? super T, Boolean> func) {
-		return dropWhile(it -> !func.apply(it));
-	}
-
-
-	default Seq<T> take(int num) {
-		return limit(num);
-	}
-
-
-	default Seq<T> takeWhile(Function<? super T, Boolean> func) {
-		AtomicBoolean test = new AtomicBoolean(false);
-
-		return filter(item -> {
-			if(test.get())
-				return false;
-			else {
-				boolean result = func.apply(item);
-
-				if(result)
-					return true;
-				else {
-					test.set(true);
-					return false;
-				}
-			}
-
-		});
-	}
-
-	default Seq<T> takeUntil(Function<? super T, Boolean> func) {
-		return takeWhile(it -> !func.apply(it));
-	}
-
-	Seq<T> concat(Iterator<T> other);
-
-	default Seq<T> concat(Iterable<T> other) {
-		return concat(other.iterator());
-	}
-
-	default Seq<T> concat(Stream<T> other) {
-		return concat(other.iterator());
-	}
-
-	default Seq<T> concat(T... other) {
-		return concat(new ArrayIterator<>(other));
-	}
-
-	default Seq<T> concat(T other) {
-		return concat(new SingletonIterator<>(other));
-	}
-
-	default Seq<T> concat(Seq<T> other) {
-		return concat(other.iterator());
-	}
-
-	default Seq<T> concat(StreamList<T> other) {
-		return concat(other.iterator());
-	}
-
-	default Seq<T> concat(ImmutableList<T> other) {
-		return concat(other.iterator());
-	}
-
-	Seq<T> tail();
-
-	Seq<T> init();
-
-	Seq<T> reverse();
-
-	default Seq<T> subStream(int start, int take) {
-		return drop(start).take(take);
-	}
-
-	default Seq<T> subStream(Function<? super T, Boolean> start, Function<? super T, Boolean> end) {
-		return dropUntil(start).takeUntil(end);
-	}
-
-	Stream<T> toStream();
-
-	Seq<T> realize();
-
-	default Seq<Tuple2<T, Integer>> zipWithIndex() {
-		return zipWith(Stream.iterate(0, i -> i + 1));
-	}
-
-	<Other> Seq<Tuple2<T, Other>> zipWith(Stream<Other> otherSteam);
+	@Override
+	FluentIterator<T> iterator();
 
 	default <Next> Seq<Next> castFiltered(Class<Next> next) {
 		return filter(next::isInstance).map(next::cast);
@@ -184,36 +67,49 @@ public interface Seq<T> extends Stream<T>, Traversable<T> {
 	@Override
 	void forEach(Consumer<? super T> consumer);
 
-	default <K, V> Map<K, V> toMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends V> valueMapper) {
-		return collect(Collectors.toMap(keyMapper, valueMapper));
-	}
+
+	Seq<T> take(int num);
+
+	Seq<T> takeWhile(Function<? super T, ? extends Boolean> func);
+
+	Seq<T> drop(int num);
+
+	Seq<T> dropWhile(Function<? super T, ? extends Boolean> func);
+
+	Seq<T> slice(int start, int take);
+
+
+
+	Seq<T> sort();
+
+	Seq<T> sort(Comparator<T> comparator);
+
+	Seq<T> reverse();
+
+
 
 	static <T> Seq<T> from(Stream<T> source){
-		return SeqImpl.from(source);
+		return new SeqImpl<>(source);
+	}
+
+	static <T> Seq<T> from(Collection<T> source){
+		return from(source.stream());
 	}
 
 	static <T> Seq<T> from(Iterable<T> source){
-		return SeqImpl.from(source);
+		return from(StreamBuilder.from(source).stream());
 	}
 
 	static <T> Seq<T> from(Iterator<T> source){
-		return SeqImpl.from(source);
+		return from(StreamBuilder.from(source).stream());
 	}
 
 	@SafeVarargs
-	@SuppressWarnings("varargs")
 	static <T> Seq<T> from(T... source){
-		return SeqImpl.from(source);
-	}
-
-	static <T> Seq<T> from(T source){
-		return SeqImpl.from(source);
+		return from(Arrays.stream(source));
 	}
 
 	static <K, V> Seq<Tuple2<K, V>> from(Map<K, V> source){
-		return SeqImpl.from(source.entrySet().stream().map(entry -> new Tuple2<>(entry.getKey(), entry.getValue())));
+		return from(source.entrySet().stream().map(entry -> new Tuple2<>(entry.getKey(), entry.getValue())));
 	}
-
-	@Override
-	Spliterator<T> spliterator();
 }

@@ -155,7 +155,7 @@ public class GraphTest {
 		Set<Graph.Node<String, Integer>> nodes = graph.getNodes();
 
 		List<Graph.Node<String, Integer>> sorted = Seq.from(nodes)
-				.sorted((f, s) -> f.getEdge() - s.getEdge())
+				.sort((f, s) -> f.getEdge() - s.getEdge())
 				.toList();
 
 		Func3<String, String, Integer, Void> checker = (first, second, num) -> {
@@ -193,7 +193,7 @@ public class GraphTest {
 		Collection<Tuple2<String, Integer>> relationships = graph.getAllRelationships("First");
 
 		List<Tuple2<String, Integer>> sorted = Seq.from(relationships)
-				.sorted((f, s) -> f.v2 - s.v2)
+				.sort((f, s) -> f.v2 - s.v2)
 				.toList();
 
 

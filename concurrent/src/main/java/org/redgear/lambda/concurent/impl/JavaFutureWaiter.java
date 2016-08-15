@@ -23,6 +23,10 @@ public class JavaFutureWaiter {
 	}
 
 	public <T> Future<T> wait(Supplier<Boolean> checker, Try.CheckedSupplier<T> source) {
+		if(checker.get()) {
+			return Future.completed(Try.of(source));
+		}
+
 		Promise<T> promise = Promise.promise();
 
 		enqueue(checker, source, promise);
@@ -32,11 +36,11 @@ public class JavaFutureWaiter {
 
 	public <T> Future<T> wait(java.util.concurrent.Future<T> source) {
 		if(source instanceof CompletableFuture) {
-			return org.redgear.lambda.concurent.Future.from((CompletableFuture<T>) source);
+			return Future.from((CompletableFuture<T>) source);
 		}
 
 		if(source.isDone()) {
-			return org.redgear.lambda.concurent.Future.completed(Try.of(source::get));
+			return Future.completed(Try.of(source::get));
 		}
 
 		return wait(source::isDone, source::get);
